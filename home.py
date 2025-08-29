@@ -4,115 +4,7 @@ Home.py - Main entry point for Streamlit Portfolio Website
 
 import streamlit as st
 import importlib
-
-
-def initialize_session_state():
-    """Initialize session state variables"""
-
-    if "selected_project" not in st.session_state:
-        st.session_state.selected_project = None
-    if "current_page" not in st.session_state:
-        st.session_state.current_page = "Home"
-
-
-def load_custom_css():
-    """Load custom CSS for styling"""
-    st.markdown(
-        """
-    <style>
-    .profile-section {
-        display: flex;
-        background: #262730;
-        border-radius: 12px;
-        border: 1px solid rgba(119, 124, 124, 0.2);
-        padding: 32px;
-        margin: 0 auto 32px auto;   /* Center horizontally */
-        margin-bottom: 32px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-        gap: 32px;
-        width: 80%;           /* Makes it stretch within the Streamlit column */
-        display: flex;         /* To help content align nicely */
-    }
-
-    .profile-container {
-        display: flex;
-        align-items: flex-start;
-        gap: 32px;
-    }
-
-    .profile-image {
-        flex-shrink: 0;
-    }
-
-    .avatar-placeholder {
-        width: 200px;
-        height: 200px;
-        background: rgba(59, 130, 246, 0.08);
-        border-radius: 9999px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 30px;
-        font-weight: 600;
-        color: #FF6B35;
-        border: 3px solid #FF6B35;
-    }
-
-    .profile-info h1 {
-        font-size: 40px;
-        color: rgba(245, 245, 245, 1);
-        font-weight: 600;
-        text-align: left;
-    }
-
-    .profile-info h2 {
-        font-size: 18px;
-        color: #FF6B35;
-        font-weight: 500;
-    }
-
-    .main-header h1 {
-        font-size: 40px;
-        color: #FF6B35;
-        font-weight: 1000;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-
-    .project-card {
-        background-color: #262730;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border-left: 4px solid #FF6B35;
-
-        /* New properties */
-        width: 100%;           /* Makes it stretch within the Streamlit column */
-        height: 250px;         /* Fixed height */
-        display: flex;         /* To help content align nicely */
-        flex-direction: column;
-        justify-content: space-between; /* Adjust vertical spacing */
-
-    }
-
-    .tech-tags {
-        margin-top: 1rem;
-    }
-
-    .tech-tag {
-        background-color: #FF6B35;
-        color: white;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.8rem;
-        margin: 0.1rem;
-        display: inline-block;
-        font-size: 0.7rem;
-    }
-
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
+import custom_css
 
 
 # -------------------------------- PROFILE --------------------------------#
@@ -141,8 +33,36 @@ def render_profile_section():
 # -------------------------------- PROJECTS --------------------------------#
 
 
-def render_projects():
-    ## TITLE
+def get_project_header(project_id):
+    """Get project data from the projects module"""
+    try:
+        module = importlib.import_module(f"projects.{project_id}")
+        return module.get_project_header()
+    except ImportError:
+        return None
+
+
+def render_project_card(project_data, page_obj=None):
+    """Render a project card with a button linking to the project page inside the card"""
+    with st.container():
+        st.markdown(
+            f"""
+            <div class="project-card">
+                <h3>{project_data["title"]}</h3>
+                <p>{project_data["short_description"]}</p>
+                <div class="tech-tags">
+                    {"".join([f'<span class="tech-tag">{tech}</span>' for tech in project_data["tech_stack"][:5]])}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if page_obj:
+            # Button is rendered inside the container, just below the card HTML
+            st.page_link(page_obj, label="View Project", icon="➡️", width="stretch")
+
+
+def render_projects(projects, page_objs):
     st.markdown(
         """
         <div class="main-header">
@@ -152,61 +72,35 @@ def render_projects():
     """,
         unsafe_allow_html=True,
     )
-
-    ## Projects Cards
-    projects = {
-        "traffic_prediction": "Traffic Flow Prediction using Deep Learning",
-        "urban_dashboard": "Urban Planning Dashboard",
-    }
-
-    # Convert projects dict into a list of tuples for easier slicing
-    project_items = list(projects.items())
-    # Loop through projects two at a time
-    for i in range(0, len(project_items), 2):
-        cols = st.columns(2)  # Create two columns
-
-    # First project in the row
-    project_id, project_title = project_items[i]
-    project_data = _get_project_data(project_id)
-    with cols[0]:
-        render_project_card(project_data)
-
-    # Second project in the row (only if it exists)
-    if i + 1 < len(project_items):
-        project_id, project_title = project_items[i + 1]
-        project_data = _get_project_data(project_id)
-        with cols[1]:
-            render_project_card(project_data)
+    for i in range(0, len(projects), 2):
+        cols = st.columns(2)
+        for j in range(2):
+            if i + j < len(projects):
+                project = projects[i + j]
+                project_data = get_project_header(project["id"])
+                with cols[j]:
+                    render_project_card(project_data, page_obj=page_objs[project["id"]])
 
 
-def _get_project_data(project_id):
-    """Get project data from the projects module"""
-    try:
-        module = importlib.import_module(f"projects.{project_id}")
-        return module.get_project_header()
-    except ImportError:
-        return None
+def home_page(page_objs, projects):
+    custom_css.load()
+    render_profile_section()
+    render_projects(projects, page_objs)
 
 
-def render_project_card(project_data):
-    """Render a project card in the listing"""
-    with st.container():
-        project_card_html = f"""
-            <div class="project-card">
-                <h3>{project_data["title"]}</h3>
-                <p>{project_data["short_description"]}</p>
-                <div class="tech-tags">
-                    {"".join([f'<span class="tech-tag">{tech}</span>' for tech in project_data["tech_stack"][:5]])}
-                </div>
-            </div>
-            """
-        st.markdown(project_card_html, unsafe_allow_html=True)
+def make_project_page(project_id, home_page_obj):
+    def page():
+        custom_css.load()
+        try:
+            module = importlib.import_module(f"projects.{project_id}")
+            module.get_project_page(home_page_obj)
+        except Exception as e:
+            st.error(f"Could not load project page: {e}")
+
+    return page
 
 
 def main():
-    """Main application function"""
-
-    # Configure the page
     st.set_page_config(
         page_title="Tanay Rastogi - Portfolio",
         page_icon="🏠",
@@ -214,17 +108,54 @@ def main():
         initial_sidebar_state="expanded",
     )
 
-    # Session state variables
-    initialize_session_state()
+    # --- Define all projects here ---
+    projects = [
+        {
+            "id": "traffic_prediction",
+            "title": "Traffic Flow Prediction using Deep Learning",
+            "icon": "🚦",
+        },
+        {
+            "id": "urban_dashboard",
+            "title": "Urban Planning Dashboard",
+            "icon": "🏙️",
+        },
+        {
+            "id": "sumo_data_extractor",
+            "title": "SUMO Data Extractor",
+            "icon": "📊",
+        },
+        # Add new projects here, e.g.:
+        # {"id": "new_project", "title": "New Project Title", "icon": ""},
+    ]
 
-    # Custom CSS for streamlit components
-    load_custom_css()
+    # --- Auto-generate pages and mapping ---
+    page_objs = {}
+    nav_pages = []
 
-    # Render profile section
-    render_profile_section()
+    # Home page (pass both page_objs and projects for rendering)
+    home = st.Page(
+        lambda: home_page(page_objs, projects),
+        title="Home",
+        icon="🏠",
+        url_path="",
+        default=True,
+    )
+    nav_pages.append(home)
 
-    # Render Projects
-    render_projects()
+    # Project pages
+    for project in projects:
+        page = st.Page(
+            make_project_page(project["id"], home),
+            title=project["title"],
+            icon=project["icon"],
+            url_path=project["id"],
+        )
+        page_objs[project["id"]] = page
+        nav_pages.append(page)
+
+    pg = st.navigation(nav_pages, position="sidebar")
+    pg.run()
 
 
 if __name__ == "__main__":
