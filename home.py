@@ -66,7 +66,7 @@ def render_projects(projects, page_objs):
     st.markdown(
         """
         <div class="main-header">
-            <h1>🚀 Projects</h1>
+            <h1>PROJECTS</h1>
             <hr style="border: 1px solid #FF6B35; margin-top: -10px; margin-bottom: 2rem;">
         </div>
     """,
@@ -113,20 +113,17 @@ def main():
         {
             "id": "traffic_prediction",
             "title": "Traffic Flow Prediction using Deep Learning",
-            "icon": "🚦",
         },
         {
             "id": "urban_dashboard",
             "title": "Urban Planning Dashboard",
-            "icon": "🏙️",
         },
         {
             "id": "sumo_data_extractor",
             "title": "SUMO Data Extractor",
-            "icon": "📊",
         },
         # Add new projects here, e.g.:
-        # {"id": "new_project", "title": "New Project Title", "icon": ""},
+        # {"id": "new_project", "title": "New Project Title"},
     ]
 
     # --- Auto-generate pages and mapping ---
@@ -137,7 +134,7 @@ def main():
     home = st.Page(
         lambda: home_page(page_objs, projects),
         title="Home",
-        icon="🏠",
+        icon="🚀",
         url_path="",
         default=True,
     )
@@ -148,7 +145,6 @@ def main():
         page = st.Page(
             make_project_page(project["id"], home),
             title=project["title"],
-            icon=project["icon"],
             url_path=project["id"],
         )
         page_objs[project["id"]] = page

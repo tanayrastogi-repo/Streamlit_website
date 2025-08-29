@@ -1,1 +1,6 @@
 # Streamlit configuration (theme, server settings)
+[theme]
+primaryColor = "rgba(255, 107, 53, 1)"
+backgroundColor = "rgba(14, 17, 23, 1)"
+secondaryBackgroundColor = "rgba(38, 39, 48, 1)"
+showSidebarBorder = true
