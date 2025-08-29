@@ -1,0 +1,5 @@
+# Folders to ignore
+.AI_generated
+__pycache__
+.vscode
+
